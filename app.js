@@ -3,6 +3,9 @@
   const SHEETS_URL = window.SHEETS_URL || '';
   const SHEETS_KEY = window.SHEETS_KEY || '';
 
+  // 巡回アプリとの連携フラグ
+  let isSingleMode = false;
+
   // ===== 要素 =====
   const form = document.getElementById('form');
   const submitBtn = document.getElementById('submitBtn');
@@ -23,7 +26,6 @@
   const gv = (sel) => { const el = typeof sel==='string'? qs(sel): sel; return (el && el.value||'').trim(); };
   const showToast = (msg) => { toast.textContent = msg; toast.hidden = false; setTimeout(()=>toast.hidden=true, 2500); };
   
-  // ===== 車両キー（V9Aとして分離保存） =====
   function vehicleKey(){
     const st = gv('[name="station"]');
     const pf = gv('[name="plate_full"]');
@@ -31,7 +33,6 @@
     return `v9a:${encodeURIComponent(st)}|${encodeURIComponent(pf)}|${encodeURIComponent(md)}`;
   }
 
-  // ===== 解錠/施錠 時刻 永続化 =====
   function loadTimes(){
     const key = vehicleKey();
     try{
@@ -160,7 +161,18 @@
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
       const j = await res.json().catch(()=>({ok:true}));
-      if(j && j.ok) showToast('送信完了'); else showToast('送信エラー');
+      if(j && j.ok) {
+        showToast('送信完了');
+        
+        // 巡回アプリへの合図（フラグの書き出し）
+        const pf = gv('[name="plate_full"]');
+        if (pf) {
+          localStorage.setItem('junkai:tire_completed_plate', pf);
+        }
+        
+      } else {
+        showToast('送信エラー');
+      }
     }catch(err){
       console.error(err);
       showToast('送信失敗');
@@ -228,6 +240,9 @@
 
   function applyUrl(){
     const p = new URLSearchParams(location.search);
+    // モード判定
+    isSingleMode = (p.get('mode') === 'single');
+
     const set = (name) => { const v = p.get(name); if(v){ const el = qs(`[name="${name}"]`); if(el){ el.value = v; } } };
     ['station','plate_full','model'].forEach(set);
   }

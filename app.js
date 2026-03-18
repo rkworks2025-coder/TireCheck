@@ -185,7 +185,8 @@
     'tread_rf','pre_rf','dot_rf',
     'tread_lf','pre_lf','dot_lf',
     'tread_lr','pre_lr','dot_lr',
-    'tread_rr','pre_rr','dot_rr'
+    'tread_rr','pre_rr','dot_rr',
+    'submitBtn'
   ];
   const FIELD_RULES = {
     std_f: {len:3}, std_r: {len:3},
@@ -217,12 +218,23 @@
     if(idx < 0) return;
     const nextId = AUTO_SEQUENCE[idx + 1];
     if(!nextId) return;
+    
+    if(nextId === 'submitBtn'){
+      const btn = document.getElementById('submitBtn');
+      if(btn) { 
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        btn.focus(); 
+      }
+      return;
+    }
+    
     const nextEl = document.getElementById(nextId) || document.querySelector(`[name="${nextId}"]`);
     if(nextEl) nextEl.focus();
   }
 
   function setupAutoAdvance(){
     AUTO_SEQUENCE.forEach(id => {
+      if(id === 'submitBtn') return;
       const el = document.getElementById(id) || document.querySelector(`[name="${id}"]`);
       if(!el) return;
       el.addEventListener('input', ev => {

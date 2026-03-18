@@ -41,12 +41,6 @@ input{ width:100%; padding:10px 12px; margin-top:4px; border-radius:10px; border
   color:var(--brand);
   font-size:16px;
 }
-.time-stamp{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-.stamp-card{ background:#141414; border:1px solid #2a2a2a; border-radius:10px; padding:8px; }
-.stamp-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-.stamp-title{ font-weight:700; }
-.stamp-btn{ padding:6px 10px; background:#222; color:#fff; border:1px solid #333; border-radius:8px; }
-.stamp-time{ font-size:22px; text-align:center; letter-spacing:1px; }
 .btn{
   appearance:none;
   border:1px solid #333;
@@ -83,10 +77,6 @@ input{ width:100%; padding:10px 12px; margin-top:4px; border-radius:10px; border
 #res_header{
   font-size:1.2em;
 }
-#res_times{
-  font-size:1.1em;
-  line-height:1.35;
-}
 #res_lines{
   font-size:1.15em;
   line-height:1.55;
@@ -120,16 +110,11 @@ input{ width:100%; padding:10px 12px; margin-top:4px; border-radius:10px; border
   .card { padding: 8px; }
   .veh-row2 { gap: 4px; }
   .std-row { gap: 4px; margin-top: 4px; }
-  .time-stamp { gap: 4px; margin-top: 4px; }
   .tire-list { gap: 2px; margin-top: 4px; }
   .tire-row { gap: 2px; }
   .title { margin: 4px 0 2px; font-size: 14px; }
   input { padding: 6px 4px; margin-top: 1px; font-size: 16px; }
   label { font-size: 11px; padding-bottom: 0; }
-  .stamp-card { padding: 4px; }
-  .stamp-head { margin-bottom: 2px; }
-  .stamp-time { font-size: 18px; line-height: 1.2; }
-  .stamp-btn { padding: 4px 8px; font-size: 12px; }
   .foot { gap: 4px; }
   .btn { padding: 8px 10px; }
   .lab { font-size: 12px; padding-bottom: 6px; }

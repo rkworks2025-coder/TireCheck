@@ -9,15 +9,10 @@
   // ===== 要素 =====
   const form = document.getElementById('form');
   const submitBtn = document.getElementById('submitBtn');
-  const unlockBtn = document.getElementById('unlockBtn');
-  const lockBtn   = document.getElementById('lockBtn');
-  const unlockTimeEl = document.getElementById('unlockTime');
-  const lockTimeEl   = document.getElementById('lockTime');
   const toast = document.getElementById('toast');
 
   const resultCard = document.getElementById('resultCard');
   const resHeader  = document.getElementById('res_header');
-  const resTimes   = document.getElementById('res_times');
   const resLines   = document.getElementById('res_lines');
   const backBtn    = document.getElementById('backBtn');
 
@@ -26,46 +21,6 @@
   const gv = (sel) => { const el = typeof sel==='string'? qs(sel): sel; return (el && el.value||'').trim(); };
   const showToast = (msg) => { toast.textContent = msg; toast.hidden = false; setTimeout(()=>toast.hidden=true, 2500); };
   
-  function vehicleKey(){
-    const st = gv('[name="station"]');
-    const pf = gv('[name="plate_full"]');
-    const md = gv('[name="model"]');
-    return `v9a:${encodeURIComponent(st)}|${encodeURIComponent(pf)}|${encodeURIComponent(md)}`;
-  }
-
-  function loadTimes(){
-    const key = vehicleKey();
-    try{
-      const raw = localStorage.getItem(key+':times');
-      if(raw){
-        const t = JSON.parse(raw);
-        unlockTimeEl.textContent = t.unlock||'--:--';
-        lockTimeEl.textContent   = t.lock||'--:--';
-      }else{
-        unlockTimeEl.textContent='--:--';
-        lockTimeEl.textContent='--:--';
-      }
-    }catch{
-      unlockTimeEl.textContent='--:--';
-      lockTimeEl.textContent='--:--';
-    }
-  }
-  function saveTimes(){
-    const key = vehicleKey();
-    try{
-      localStorage.setItem(key+':times', JSON.stringify({
-        unlock: unlockTimeEl.textContent, lock: lockTimeEl.textContent
-      }));
-    }catch{}
-  }
-  function stampNow(target){
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2,'0');
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    target.textContent = `${hh}:${mm}`;
-    saveTimes();
-  }
-
   const FIELDS = [
     'tread_rf','pre_rf','dot_rf',
     'tread_lf','pre_lf','dot_lf',
@@ -115,9 +70,6 @@
   }
 
   async function fetchSheetData(){
-    if (unlockTimeEl) unlockTimeEl.textContent = '--:--';
-    if (lockTimeEl) lockTimeEl.textContent = '--:--';
-
     const st = gv('[name="station"]');
     const md = gv('[name="model"]');
     const pf = gv('[name="plate_full"]');
@@ -179,33 +131,6 @@
     }
   }
 
-  async function postLockTimeOnly(){
-    if(!SHEETS_URL){ showToast('送信先未設定'); return; }
-    const payload = {
-      mode: 'lock_only',
-      station: gv('[name="station"]'),
-      plate_full: gv('[name="plate_full"]'),
-      model: gv('[name="model"]'),
-      lock: lockTimeEl.textContent || ''
-    };
-    try{
-      const body = new URLSearchParams();
-      body.set('key', SHEETS_KEY);
-      body.set('json', JSON.stringify(payload));
-      const res = await fetch(SHEETS_URL, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-        body
-      });
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const j = await res.json().catch(()=>({ok:true}));
-      if(j && j.ok) showToast('施錠時刻を送信しました'); else showToast('送信エラー');
-    }catch(err){
-      console.error(err);
-      showToast('送信失敗');
-    }
-  }
-
   function collectPayload(){
     const obj = {
       station: gv('[name="station"]'),
@@ -217,8 +142,6 @@
       tread_lf: gv('#tread_lf'), pre_lf: gv('#pre_lf'), dot_lf: gv('#dot_lf'),
       tread_lr: gv('#tread_lr'), pre_lr: gv('#pre_lr'), dot_lr: gv('#dot_lr'),
       tread_rr: gv('#tread_rr'), pre_rr: gv('#pre_rr'), dot_rr: gv('#dot_rr'),
-      unlock: unlockTimeEl.textContent||'',
-      lock:   lockTimeEl.textContent||'',
       operator: ''
     };
     obj.timestamp_iso = timestampForSheet();
@@ -250,23 +173,10 @@
   function wire(){
     ['station','plate_full','model'].forEach(name =>{
       document.querySelectorAll(`[name="${name}"]`).forEach(el=>{
-        const h = ()=>{ loadTimes(); fetchSheetData(); };
+        const h = ()=>{ fetchSheetData(); };
         el.addEventListener('change', h, {passive:true});
         el.addEventListener('input',  h, {passive:true});
       });
-    });
-    unlockBtn?.addEventListener('click', ()=> {
-      stampNow(unlockTimeEl);
-      if(submitBtn){
-        submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        submitBtn.focus();
-      }
-    });
-    lockBtn?.addEventListener('click',   ()=> {
-      if(window.confirm("施錠完了でよろしいですか？")){
-        stampNow(lockTimeEl);
-        postLockTimeOnly();
-      }
     });
   }
 
@@ -275,8 +185,7 @@
     'tread_rf','pre_rf','dot_rf',
     'tread_lf','pre_lf','dot_lf',
     'tread_lr','pre_lr','dot_lr',
-    'tread_rr','pre_rr','dot_rr',
-    'unlockBtn'
+    'tread_rr','pre_rr','dot_rr'
   ];
   const FIELD_RULES = {
     std_f: {len:3}, std_r: {len:3},
@@ -308,18 +217,12 @@
     if(idx < 0) return;
     const nextId = AUTO_SEQUENCE[idx + 1];
     if(!nextId) return;
-    if(nextId === 'unlockBtn'){
-      const btn = document.getElementById('unlockBtn');
-      if(btn) { btn.scrollIntoView({ behavior: 'auto', block: 'center' }); btn.focus(); }
-      return;
-    }
     const nextEl = document.getElementById(nextId) || document.querySelector(`[name="${nextId}"]`);
     if(nextEl) nextEl.focus();
   }
 
   function setupAutoAdvance(){
     AUTO_SEQUENCE.forEach(id => {
-      if(id === 'unlockBtn') return;
       const el = document.getElementById(id) || document.querySelector(`[name="${id}"]`);
       if(!el) return;
       el.addEventListener('input', ev => {
@@ -352,7 +255,7 @@
   };
 
   function init(){
-    applyUrl(); showPrevPlaceholders(); loadTimes(); fetchSheetData(); wire(); setupAutoAdvance();
+    applyUrl(); showPrevPlaceholders(); fetchSheetData(); wire(); setupAutoAdvance();
     if(form){
       form.addEventListener('submit', async ev => {
         ev.preventDefault();
@@ -371,7 +274,6 @@
         }
         const p = collectPayload();
         if(resHeader) resHeader.textContent = (p.station ? p.station + '\n' : '') + p.plate_full + '\n' + p.model;
-        if(resTimes) resTimes.innerHTML = `解錠　${p.unlock || '--:--'}<br>施錠　${p.lock || '--:--'}`;
         const lines = [];
         if(p.std_f && p.std_r) lines.push(`${p.std_f}-${p.std_r}`);
         lines.push(`${p.tread_rf||''} ${p.pre_rf||''} ${p.dot_rf||''}   RF`);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>タイヤ点検アプリ V9B</title>
+  <title>タイヤ点検アプリ V9C</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -11,7 +11,7 @@
     <form id="form" class="card" onsubmit="return false;">
       <div class="section-head">
         <p class="title">車両情報</p>
-        <div class="app-info">タイヤ点検 <span class="ver-text">V9B</span></div>
+        <div class="app-info">タイヤ点検 <span class="ver-text">V9C</span></div>
       </div>
       <div class="veh-rows">
         <div><label>ステーション名 <input type="text" name="station" required></label></div>
@@ -22,10 +22,6 @@
         <div class="std-row">
           <div><label>規定圧（前）kPa <span class="hint">任意</span><input name="std_f" inputmode="numeric" maxlength="3"></label></div>
           <div><label>規定圧（後）kPa <span class="hint">任意</span><input name="std_r" inputmode="numeric" maxlength="3"></label></div>
-        </div>
-        <div class="time-stamp">
-          <div class="stamp-card"><div class="stamp-head"><div class="stamp-title">解錠</div><button type="button" id="unlockBtn" class="stamp-btn">記録</button></div><div id="unlockTime" class="stamp-time">--:--</div></div>
-          <div class="stamp-card"><div class="stamp-head"><div class="stamp-title">施錠</div><button type="button" id="lockBtn" class="stamp-btn">記録</button></div><div id="lockTime" class="stamp-time">--:--</div></div>
         </div>
       </div>
 
@@ -100,7 +96,6 @@
     <div class="card" id="resultCard" style="display:none;">
       <p class="title">結果</p>
       <div class="mono" id="res_header"></div>
-      <div class="mono" id="res_times"></div>
       <div class="mono" id="res_lines"></div>
       <div class="foot section"><button class="btn" id="backBtn" type="button">入力に戻る</button></div>
     </div>

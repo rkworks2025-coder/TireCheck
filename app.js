@@ -4,7 +4,7 @@
 
   let isSingleMode = false;
   let currentFocusInput = null;
-  let lastTireRow = null; // 現在のタイヤ行を記憶
+  let lastInputTop = 0; // 直前の入力欄の高さを記憶
 
   const form = document.getElementById('form');
   const toast = document.getElementById('toast');
@@ -174,25 +174,36 @@
     if(nextEl) nextEl.focus();
   }
 
-  // --- キーボード・スクロール制御 (V9F: 跳ね防止・改行時のみ移動) ---
+  // --- キーボード・スクロール制御 (V9G: 横移動時のスクロール完全停止) ---
+  
+  // ページの一番上からの絶対的な高さを取得する関数
+  function getAbsTop(el) {
+    let top = 0;
+    while(el && el !== mainWrap) {
+      top += el.offsetTop;
+      el = el.offsetParent;
+    }
+    return top;
+  }
+
   function showKeypad(target){
     keypad.classList.add('show');
-    const currentRow = target.closest('.tire-row') || target.parentElement;
     
-    // 同じタイヤ行内での移動なら何もしない
-    if(lastTireRow === currentRow) return;
-    lastTireRow = currentRow;
+    const currentTop = getAbsTop(target);
+    
+    // 直前の項目と同じ高さ（横移動）なら、一切動かさずに終了
+    if(currentTop === lastInputTop) return;
+    lastInputTop = currentTop;
 
+    // 改行時の押し上げ計算
     const rect = target.getBoundingClientRect();
     const kbHeight = 190;
     const threshold = window.innerHeight - kbHeight;
 
-    // 隠れる場合のみスライド（絶対位置ベースで計算）
     if(rect.bottom > threshold){
       const shift = rect.bottom - threshold + 20;
-      // 現在のtransform値を取得して加算することで「ガクン」を防止
-      const currentTransform = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform).m42;
-      mainWrap.style.transform = `translateY(${currentTransform - shift}px)`;
+      const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
+      mainWrap.style.transform = `translateY(${currentMatrix.m42 - shift}px)`;
     }
   }
 
@@ -200,7 +211,7 @@
     keypad.classList.remove('show');
     mainWrap.style.transform = 'translateY(0)';
     currentFocusInput = null;
-    lastTireRow = null;
+    lastInputTop = 0;
   }
 
   function setupAutoAdvance(){

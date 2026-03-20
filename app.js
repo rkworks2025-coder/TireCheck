@@ -1,13 +1,11 @@
 (() => {
-  // ===== 設定 =====
   const SHEETS_URL = window.SHEETS_URL || '';
   const SHEETS_KEY = window.SHEETS_KEY || '';
 
   let isSingleMode = false;
   let currentFocusInput = null;
-  let lastRowElement = null; // 現在のタイヤ行要素を記憶
+  let lastRowElement = null; 
 
-  // ===== 要素 =====
   const form = document.getElementById('form');
   const toast = document.getElementById('toast');
   const resultCard = document.getElementById('resultCard');
@@ -17,7 +15,6 @@
   const keypad = document.getElementById('customKeypad');
   const mainWrap = document.getElementById('mainWrap');
 
-  // ===== ユーティリティ =====
   const qs = (s, root=document) => root.querySelector(s);
   const gv = (sel) => { const el = typeof sel==='string'? qs(sel): sel; return (el && el.value||'').trim(); };
   const showToast = (msg) => { toast.textContent = msg; toast.hidden = false; setTimeout(()=>toast.hidden=true, 2500); };
@@ -169,40 +166,39 @@
     if(nextId === 'submitBtn'){
       const btn = document.getElementById('submitBtn');
       btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      btn.focus();
+      btn.focus({ preventScroll: true }); // ①強制スクロール防止
       hideKeypad();
       return;
     }
     const nextEl = document.getElementById(nextId) || document.querySelector(`[name="${nextId}"]`);
-    if(nextEl) nextEl.focus();
+    if(nextEl) {
+      nextEl.focus({ preventScroll: true }); // ①強制スクロール防止
+    }
   }
 
-  // --- キーボード・スクロール制御 (V9H: 親要素基準で横移動を完全静止) ---
-  
+  // --- キーボード・スクロール制御 (V9I: 確定的な絶対座標計算・強制スクロール防止) ---
   function showKeypad(target){
     keypad.classList.add('show');
     
-    // 現在のタイヤ行（.tire-row）を取得
-    const currentRow = target.closest('.tire-row') || target.parentElement;
-    
-    // 同じタイヤ行内（横移動）なら、画面調整を一切行わず終了
-    if(currentRow === lastRowElement) return;
+    // ②規定圧の行（.std-row）も含めて、確実に行単位でグループ判定
+    const currentRow = target.closest('.tire-row, .std-row') || target.parentElement;
+    if(currentRow && currentRow === lastRowElement) return;
     lastRowElement = currentRow;
 
-    // 行が変わった時（改行時）のみ位置を計測
-    const rect = target.getBoundingClientRect();
+    // ③絶対座標ベースの確定計算（スライド状態に左右されない）
+    const rect = currentRow.getBoundingClientRect(); // 行全体の座標を取得
+    const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
+    const currentY = currentMatrix.m42;
+    
+    // transformを0にした状態での本来のBottom位置を計算
+    const naturalBottom = rect.bottom - currentY;
     const kbHeight = 190;
     const threshold = window.innerHeight - kbHeight;
 
-    // 1. キーボードに隠れる位置にある場合のみ持ち上げる
-    if(rect.bottom > threshold){
-      const shift = rect.bottom - threshold + 20;
-      // 現在のtransformを考慮した差分スライド
-      const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
-      mainWrap.style.transform = `translateY(${currentMatrix.m42 - shift}px)`;
-    } 
-    // 2. 隠れない位置（上2行など）に移動した場合は、元の位置(0)に戻す
-    else {
+    if(naturalBottom > threshold){
+      const shift = naturalBottom - threshold + 20;
+      mainWrap.style.transform = `translateY(-${shift}px)`;
+    } else {
       mainWrap.style.transform = 'translateY(0)';
     }
   }
@@ -211,7 +207,7 @@
     keypad.classList.remove('show');
     mainWrap.style.transform = 'translateY(0)';
     currentFocusInput = null;
-    lastRowElement = null; // 閉じたらリセット
+    lastRowElement = null;
   }
 
   function setupAutoAdvance(){

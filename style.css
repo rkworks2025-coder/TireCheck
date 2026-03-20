@@ -50,7 +50,7 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
 .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:16px; background:#222; border:1px solid #333; color:#fff; padding:10px 14px; border-radius:10px; z-index:999; }
 
 .tire-list{ display:grid; gap:10px; margin-top:10px; }
-.tire-row{ display:grid; grid-template-columns: 1fr 1fr 1fr 48px; gap:10px; align-items:end; padding:4px 0; border-radius:8px; }
+.tire-row{ display:grid; grid-template-columns: 1fr 1fr 1fr 48px; gap:10px; align-items:end; }
 .lab{ font-weight:700; text-align:right; color:var(--muted); padding-bottom:4px; }
 .inline{ display:grid; gap:2px; }
 

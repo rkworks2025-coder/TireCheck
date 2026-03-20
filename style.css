@@ -1,7 +1,7 @@
 :root{ --bg:#111; --fg:#eee; --muted:#9aa; --card:#1a1a1a; --brand:#ff8c00; --kb-bg:#252525; }
 *{ box-sizing:border-box; }
 body{ margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; overflow-x: hidden; }
-.wrap{ padding:8px; max-width:740px; margin:0 auto; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.wrap{ padding:8px; max-width:740px; margin:0 auto; transition: transform 0.3s ease-out; }
 
 .card{ background:var(--card); border-radius:12px; padding:12px; }
 
@@ -50,17 +50,17 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
 .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:16px; background:#222; border:1px solid #333; color:#fff; padding:10px 14px; border-radius:10px; z-index:999; }
 
 .tire-list{ display:grid; gap:10px; margin-top:10px; }
-.tire-row{ display:grid; grid-template-columns: 1fr 1fr 1fr 48px; gap:10px; align-items:end; }
+.tire-row{ display:grid; grid-template-columns: 1fr 1fr 1fr 48px; gap:10px; align-items:end; padding:4px 0; border-radius:8px; }
 .lab{ font-weight:700; text-align:right; color:var(--muted); padding-bottom:4px; }
 .inline{ display:grid; gap:2px; }
 
-/* --- カスタムテンキー用スタイル --- */
+/* --- カスタムテンキー用 --- */
 .keypad-container {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 190px; /* 高さを現在の2/3（約190px）に短縮 */
+  height: 190px;
   background: transparent;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -72,7 +72,7 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   pointer-events: auto;
 }
 .keypad-grid {
-  width: 66%; /* 左側2/3 */
+  width: 66%;
   height: 100%;
   background: var(--kb-bg);
   display: grid;
@@ -81,7 +81,6 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   gap: 1px;
   padding: 1px;
   border-top: 1px solid #444;
-  box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }
 .key {
   appearance: none;
@@ -93,31 +92,13 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   display: flex;
   justify-content: center;
   align-items: center;
-  touch-action: manipulation; /* 連続タップ時のズームを防止 */
+  touch-action: manipulation;
 }
-.key:active {
-  background: #555;
-}
-.btn-close {
-  background: var(--brand);
-  color: #000;
-}
-.btn-bs {
-  background: #2a2a2a;
-  font-size: 18px;
-}
+.key:active { background: #555; }
+.btn-close { background: var(--brand); color: #000; }
+.btn-bs { background: #2a2a2a; font-size: 18px; }
 
 @media (max-width: 480px) {
-  .wrap { padding: 4px; }
-  .card { padding: 8px; }
-  .veh-row2 { gap: 4px; }
-  .std-row { gap: 4px; margin-top: 4px; }
-  .tire-list { gap: 2px; margin-top: 4px; }
-  .tire-row { gap: 2px; }
-  .title { margin: 4px 0 2px; font-size: 14px; }
-  input { padding: 8px 6px; margin-top: 1px; font-size: 16px; }
-  label { font-size: 11px; padding-bottom: 0; }
-  .foot { gap: 4px; }
-  .btn { padding: 8px 10px; }
+  input { padding: 8px 6px; font-size: 16px; }
   .lab { font-size: 12px; padding-bottom: 6px; }
 }

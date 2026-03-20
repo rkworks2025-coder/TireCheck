@@ -266,14 +266,22 @@
     });
   }
 
-  // --- キーボード制御ロジック ---
+  // --- キーボード制御ロジック (絶対座標計算に修正) ---
   function showKeypad(target){
     keypad.classList.add('show');
+    
+    // 計算を正確にするため、一旦transformを0に戻して本来の位置を計測する
+    const prevTransform = mainWrap.style.transform;
+    mainWrap.style.transition = 'none';
+    mainWrap.style.transform = 'translateY(0)';
+    
     const rect = target.getBoundingClientRect();
-    const kbHeight = 280;
+    const kbHeight = 190;
     const threshold = window.innerHeight - kbHeight;
+    
+    mainWrap.style.transition = '';
     if(rect.bottom > threshold){
-      const shift = rect.bottom - threshold + 10;
+      const shift = rect.bottom - threshold + 15;
       mainWrap.style.transform = `translateY(-${shift}px)`;
     } else {
       mainWrap.style.transform = 'translateY(0)';
@@ -287,24 +295,27 @@
   }
 
   function setupCustomKeypad(){
-    keypad.addEventListener('click', e => {
-      if(!currentFocusInput) return;
+    // 連打によるズームを防止するため、touchend/touchstartでの制御を強化
+    keypad.addEventListener('touchstart', e => {
       const btn = e.target.closest('.key');
       if(!btn) return;
+      e.preventDefault(); // デフォルトのズーム動作を完全に遮断
       
+      if(!currentFocusInput) return;
       const val = btn.getAttribute('data-val');
       if(val === 'bs'){
         currentFocusInput.value = currentFocusInput.value.slice(0, -1);
-      } else if(val !== null) {
+      } else if(val !== null && val !== 'close') {
         currentFocusInput.value += val;
+      } else if(btn.id === 'keyClose') {
+        hideKeypad();
+        return;
       }
-      
-      // inputイベントを手動で発火させて既存のバリデーション・自動進捗を動かす
       currentFocusInput.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    }, {passive: false});
+
     document.getElementById('keyClose').addEventListener('click', hideKeypad);
     
-    // 枠外タップで閉じる
     document.addEventListener('touchstart', e => {
       if(!keypad.contains(e.target) && !e.target.matches('input[inputmode="none"]')){
         hideKeypad();

@@ -1,12 +1,16 @@
 (() => {
+  // ===== 設定 =====
   const SHEETS_URL = window.SHEETS_URL || '';
   const SHEETS_KEY = window.SHEETS_KEY || '';
 
+  // 巡回アプリとの連携フラグ
   let isSingleMode = false;
   let currentFocusInput = null;
   let lastRowElement = null; 
 
+  // ===== 要素 =====
   const form = document.getElementById('form');
+  const submitBtn = document.getElementById('submitBtn');
   const toast = document.getElementById('toast');
   const resultCard = document.getElementById('resultCard');
   const resHeader  = document.getElementById('res_header');
@@ -15,6 +19,7 @@
   const keypad = document.getElementById('customKeypad');
   const mainWrap = document.getElementById('mainWrap');
 
+  // ===== ユーティリティ =====
   const qs = (s, root=document) => root.querySelector(s);
   const gv = (sel) => { const el = typeof sel==='string'? qs(sel): sel; return (el && el.value||'').trim(); };
   const showToast = (msg) => { toast.textContent = msg; toast.hidden = false; setTimeout(()=>toast.hidden=true, 2500); };
@@ -99,8 +104,11 @@
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
       showToast('送信完了');
+      
+      // 巡回アプリへの合図（フラグの書き出し）
       const pf = gv('[name="plate_full"]');
       if (pf) localStorage.setItem('junkai:tire_completed_plate', pf);
+      
     }catch(err){ console.error(err); showToast('送信失敗'); }
   }
 
@@ -163,34 +171,41 @@
     const idx = AUTO_SEQUENCE.indexOf(currentId);
     const nextId = AUTO_SEQUENCE[idx + 1];
     if(!nextId) return;
+    
     if(nextId === 'submitBtn'){
       const btn = document.getElementById('submitBtn');
-      btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      btn.focus({ preventScroll: true }); // ①強制スクロール防止
+      // ブラウザの強制スクロールを防止してフォーカスを当てる
+      btn.focus({ preventScroll: true }); 
       hideKeypad();
+      
+      // キーボードが下がりきるアニメーション（0.3秒）を待ってから自然な位置へスクロール
+      setTimeout(() => {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 320);
       return;
     }
+    
     const nextEl = document.getElementById(nextId) || document.querySelector(`[name="${nextId}"]`);
     if(nextEl) {
-      nextEl.focus({ preventScroll: true }); // ①強制スクロール防止
+      // 次の入力欄への移動時も強制スクロールを防止
+      nextEl.focus({ preventScroll: true }); 
     }
   }
 
-  // --- キーボード・スクロール制御 (V9I: 確定的な絶対座標計算・強制スクロール防止) ---
+  // --- キーボード・スクロール制御 (V9J: 確定的な絶対座標計算・強制スクロール防止) ---
   function showKeypad(target){
     keypad.classList.add('show');
     
-    // ②規定圧の行（.std-row）も含めて、確実に行単位でグループ判定
+    // 規定圧の行（.std-row）も含めて、確実に行単位でグループ判定
     const currentRow = target.closest('.tire-row, .std-row') || target.parentElement;
     if(currentRow && currentRow === lastRowElement) return;
     lastRowElement = currentRow;
 
-    // ③絶対座標ベースの確定計算（スライド状態に左右されない）
-    const rect = currentRow.getBoundingClientRect(); // 行全体の座標を取得
+    // 絶対座標ベースの確定計算（スライド状態に左右されない）
+    const rect = currentRow.getBoundingClientRect(); 
     const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
     const currentY = currentMatrix.m42;
     
-    // transformを0にした状態での本来のBottom位置を計算
     const naturalBottom = rect.bottom - currentY;
     const kbHeight = 190;
     const threshold = window.innerHeight - kbHeight;
@@ -235,9 +250,15 @@
       const val = btn.getAttribute('data-val');
       if(val === 'bs') currentFocusInput.value = currentFocusInput.value.slice(0, -1);
       else if(val !== null) currentFocusInput.value += val;
+      else if(btn.id === 'keyClose') {
+        hideKeypad();
+        return;
+      }
       currentFocusInput.dispatchEvent(new Event('input', { bubbles: true }));
     }, {passive: false});
+    
     document.getElementById('keyClose').addEventListener('click', hideKeypad);
+    
     document.addEventListener('touchstart', e => {
       if(!keypad.contains(e.target) && !e.target.matches('input[inputmode="none"]')) hideKeypad();
     }, {passive:true});

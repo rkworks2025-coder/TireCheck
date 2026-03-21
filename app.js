@@ -168,8 +168,9 @@
     if(!nextId) return;
     
     if(nextId === 'submitBtn'){
-      // 画面は動かさず、ただキーボードを非表示にするだけ
+      // 画面は動かさず、ただキーボードを非表示にする
       keypad.classList.remove('show');
+      if (currentFocusInput) currentFocusInput.blur();
       currentFocusInput = null;
       lastRowElement = null;
       return;
@@ -207,6 +208,7 @@
   function hideKeypad(){
     keypad.classList.remove('show');
     mainWrap.style.transform = 'translateY(0)';
+    if (currentFocusInput) currentFocusInput.blur();
     currentFocusInput = null;
     lastRowElement = null;
   }

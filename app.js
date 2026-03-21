@@ -5,6 +5,7 @@
   let isSingleMode = false;
   let currentFocusInput = null;
   let lastRowElement = null; 
+  let audioCtx = null; // 音声コンテキストを追加
 
   const form = document.getElementById('form');
   const submitBtn = document.getElementById('submitBtn');
@@ -26,6 +27,30 @@
     'tread_lr','pre_lr','dot_lr',
     'tread_rr','pre_rr','dot_rr'
   ];
+
+  // 音を鳴らす関数（短く乾いた「ポツッ」というクリック音）
+  function playClickSound(){
+    if(!audioCtx) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    // 短く低い音を生成
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(10, t + 0.02);
+    
+    gain.gain.setValueAtTime(0.15, t); // 音量は控えめ
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+    
+    osc.start(t);
+    osc.stop(t + 0.02);
+  }
 
   function fallbackFor(id){
     if(id.startsWith('tread')) return '--';
@@ -232,9 +257,19 @@
 
   function setupCustomKeypad(){
     keypad.addEventListener('touchstart', e => {
+      // 最初のタッチでAudioContextを初期化
+      if(!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if(AudioContext) audioCtx = new AudioContext();
+      }
+      
       const btn = e.target.closest('.key');
       if(!btn || !currentFocusInput) return;
       e.preventDefault();
+      
+      // キーが押されたら音を鳴らす
+      playClickSound();
+
       const val = btn.getAttribute('data-val');
       if(val === 'bs') currentFocusInput.value = currentFocusInput.value.slice(0, -1);
       else if(val !== null) currentFocusInput.value += val;

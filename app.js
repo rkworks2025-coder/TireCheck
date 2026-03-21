@@ -28,7 +28,7 @@
     'tread_rr','pre_rr','dot_rr'
   ];
 
-  // 音を鳴らす関数（iPod風の乾いた「ポツッ」という高音クリック）
+  // 音を鳴らす関数（極短・超高音の「チッ」という乾燥したクリック音）
   function playClickSound(){
     if(!audioCtx) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -40,16 +40,16 @@
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
-    // 高音で非常に短い設定
-    osc.type = 'triangle'; 
-    osc.frequency.setValueAtTime(2500, t); 
-    osc.frequency.exponentialRampToValueAtTime(400, t + 0.012); 
+    // 超高音・極短の設定（iPodのクリック音や静電気のような鋭さ）
+    osc.type = 'sine'; 
+    osc.frequency.setValueAtTime(6000, t); 
+    osc.frequency.exponentialRampToValueAtTime(1000, t + 0.008); 
     
-    gain.gain.setValueAtTime(0.2, t); 
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+    gain.gain.setValueAtTime(0.3, t); // 非常に短いので音量は少し上げめに設定
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.008);
     
     osc.start(t);
-    osc.stop(t + 0.012);
+    osc.stop(t + 0.008);
   }
 
   function fallbackFor(id){

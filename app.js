@@ -28,7 +28,7 @@
     'tread_rr','pre_rr','dot_rr'
   ];
 
-  // 音を鳴らす関数（極短・超高音の「チッ」という乾燥したクリック音）
+  // 音を鳴らす関数（4000Hz/10ms/三角波：中間的なカチッとしたクリック音）
   function playClickSound(){
     if(!audioCtx) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -40,16 +40,16 @@
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
-    // 超高音・極短の設定（iPodのクリック音や静電気のような鋭さ）
-    osc.type = 'sine'; 
-    osc.frequency.setValueAtTime(6000, t); 
-    osc.frequency.exponentialRampToValueAtTime(1000, t + 0.008); 
+    // 中間設定：4000Hzの高音域だが三角波で少し芯を持たせる
+    osc.type = 'triangle'; 
+    osc.frequency.setValueAtTime(4000, t); 
+    osc.frequency.exponentialRampToValueAtTime(1000, t + 0.01); 
     
-    gain.gain.setValueAtTime(0.3, t); // 非常に短いので音量は少し上げめに設定
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.008);
+    gain.gain.setValueAtTime(0.25, t); 
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
     
     osc.start(t);
-    osc.stop(t + 0.008);
+    osc.stop(t + 0.01);
   }
 
   function fallbackFor(id){

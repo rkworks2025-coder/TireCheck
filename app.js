@@ -5,7 +5,7 @@
   let isSingleMode = false;
   let currentFocusInput = null;
   let lastRowElement = null; 
-  let audioCtx = null; // 音声コンテキストを追加
+  let audioCtx = null; 
 
   const form = document.getElementById('form');
   const submitBtn = document.getElementById('submitBtn');
@@ -28,7 +28,7 @@
     'tread_rr','pre_rr','dot_rr'
   ];
 
-  // 音を鳴らす関数（短く乾いた「ポツッ」というクリック音）
+  // 音を鳴らす関数（iPod風の乾いた「ポツッ」という高音クリック）
   function playClickSound(){
     if(!audioCtx) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -40,16 +40,16 @@
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
-    // 短く低い音を生成
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(100, t);
-    osc.frequency.exponentialRampToValueAtTime(10, t + 0.02);
+    // 高音で非常に短い設定
+    osc.type = 'triangle'; 
+    osc.frequency.setValueAtTime(2500, t); 
+    osc.frequency.exponentialRampToValueAtTime(400, t + 0.012); 
     
-    gain.gain.setValueAtTime(0.15, t); // 音量は控えめ
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+    gain.gain.setValueAtTime(0.2, t); 
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
     
     osc.start(t);
-    osc.stop(t + 0.02);
+    osc.stop(t + 0.012);
   }
 
   function fallbackFor(id){
@@ -193,7 +193,6 @@
     if(!nextId) return;
     
     if(nextId === 'submitBtn'){
-      // 画面は動かさず、ただキーボードを非表示にする
       keypad.classList.remove('show');
       if (currentFocusInput) currentFocusInput.blur();
       currentFocusInput = null;
@@ -257,7 +256,6 @@
 
   function setupCustomKeypad(){
     keypad.addEventListener('touchstart', e => {
-      // 最初のタッチでAudioContextを初期化
       if(!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if(AudioContext) audioCtx = new AudioContext();
@@ -267,7 +265,6 @@
       if(!btn || !currentFocusInput) return;
       e.preventDefault();
       
-      // キーが押されたら音を鳴らす
       playClickSound();
 
       const val = btn.getAttribute('data-val');
@@ -304,7 +301,6 @@
         ];
         if(resLines) resLines.textContent = lines.join('\n');
         
-        // 次の画面（結果表示）へ移行する際に画面位置をリセット
         mainWrap.style.transform = 'translateY(0)';
         form.style.display = 'none'; 
         resultCard.style.display = 'block'; 

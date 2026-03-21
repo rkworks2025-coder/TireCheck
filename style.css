@@ -60,7 +60,7 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 190px;
+  height: 215px;
   background: transparent;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -72,14 +72,14 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   pointer-events: auto;
 }
 .keypad-grid {
-  width: 66%;
+  width: 75%;
   height: 100%;
   background: var(--kb-bg);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(4, 1fr);
-  gap: 1px;
-  padding: 1px;
+  gap: 6px;
+  padding: 6px;
   border-top: 1px solid #444;
 }
 .key {
@@ -93,6 +93,8 @@ input:focus { border-color: var(--brand); outline: none; background: #1a1a1a; }
   justify-content: center;
   align-items: center;
   touch-action: manipulation;
+  border-radius: 6px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.5);
 }
 .key:active { background: #555; }
 .btn-close { background: var(--brand); color: #000; }

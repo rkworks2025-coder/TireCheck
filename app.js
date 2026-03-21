@@ -193,7 +193,7 @@
     const currentY = currentMatrix.m42;
     
     const naturalBottom = rect.bottom - currentY;
-    const kbHeight = 190;
+    const kbHeight = 215;
     const threshold = window.innerHeight - kbHeight;
 
     if(naturalBottom > threshold){

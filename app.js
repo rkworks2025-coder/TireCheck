@@ -168,8 +168,10 @@
     if(!nextId) return;
     
     if(nextId === 'submitBtn'){
-      // 何もしないでキーボードを下ろすだけ
-      hideKeypad();
+      // 画面は動かさず、ただキーボードを非表示にするだけ
+      keypad.classList.remove('show');
+      currentFocusInput = null;
+      lastRowElement = null;
       return;
     }
     
@@ -264,7 +266,13 @@
           '', new Date().toLocaleString('ja-JP')
         ];
         if(resLines) resLines.textContent = lines.join('\n');
-        form.style.display = 'none'; resultCard.style.display = 'block'; window.scrollTo({top:0});
+        
+        // 次の画面（結果表示）へ移行する際に画面位置をリセット
+        mainWrap.style.transform = 'translateY(0)';
+        form.style.display = 'none'; 
+        resultCard.style.display = 'block'; 
+        window.scrollTo({top:0});
+        
         await postToSheet();
       });
     }

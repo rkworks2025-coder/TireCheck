@@ -134,7 +134,7 @@
     isSingleMode = (p.get('mode') === 'single');
     ['station','plate_full','model'].forEach(name => {
       const v = p.get(name);
-      if(v) { const el = qs(`[name="${name}"]`); if(el) value = v; }
+      if(v) { const el = qs(`[name="${name}"]`); if(el) el.value = v; }
     });
   }
 

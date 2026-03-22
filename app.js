@@ -28,26 +28,19 @@
     'tread_rr','pre_rr','dot_rr'
   ];
 
-  // 音を鳴らす関数（4000Hz/10ms/三角波：中間的なカチッとしたクリック音）
   function playClickSound(){
     if(!audioCtx) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
-    
     const t = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
-    // 中間設定：4000Hzの高音域だが三角波で少し芯を持たせる
     osc.type = 'triangle'; 
     osc.frequency.setValueAtTime(4000, t); 
     osc.frequency.exponentialRampToValueAtTime(1000, t + 0.01); 
-    
     gain.gain.setValueAtTime(0.25, t); 
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
-    
     osc.start(t);
     osc.stop(t + 0.01);
   }
@@ -125,10 +118,8 @@
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
       showToast('送信完了');
-      
       const pf = gv('[name="plate_full"]');
       if (pf) localStorage.setItem('junkai:tire_completed_plate', pf);
-      
     }catch(err){ console.error(err); showToast('送信失敗'); }
   }
 
@@ -193,6 +184,7 @@
     if(!nextId) return;
     
     if(nextId === 'submitBtn'){
+      // キーボードを閉じ、フォーカスを外すが、画面位置（translateY）は一切動かさない
       keypad.classList.remove('show');
       if (currentFocusInput) currentFocusInput.blur();
       currentFocusInput = null;
@@ -230,8 +222,8 @@
   }
 
   function hideKeypad(){
+    // キーボードを閉じ、フォーカスを外すが、画面位置（translateY）は一切動かさない
     keypad.classList.remove('show');
-    mainWrap.style.transform = 'translateY(0)';
     if (currentFocusInput) currentFocusInput.blur();
     currentFocusInput = null;
     lastRowElement = null;
@@ -260,13 +252,10 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if(AudioContext) audioCtx = new AudioContext();
       }
-      
       const btn = e.target.closest('.key');
       if(!btn || !currentFocusInput) return;
       e.preventDefault();
-      
       playClickSound();
-
       const val = btn.getAttribute('data-val');
       if(val === 'bs') currentFocusInput.value = currentFocusInput.value.slice(0, -1);
       else if(val !== null) currentFocusInput.value += val;
@@ -280,7 +269,9 @@
     document.getElementById('keyClose').addEventListener('click', hideKeypad);
     
     document.addEventListener('touchstart', e => {
-      if(!keypad.contains(e.target) && !e.target.matches('input[inputmode="none"]')) hideKeypad();
+      if(!keypad.contains(e.target) && !e.target.matches('input[inputmode="none"]')) {
+        if(keypad.classList.contains('show')) hideKeypad();
+      }
     }, {passive:true});
   }
 
@@ -301,6 +292,7 @@
         ];
         if(resLines) resLines.textContent = lines.join('\n');
         
+        // 画面位置のリセットは、結果表示に切り替わるこのタイミングのみ
         mainWrap.style.transform = 'translateY(0)';
         form.style.display = 'none'; 
         resultCard.style.display = 'block'; 

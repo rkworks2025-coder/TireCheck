@@ -1,6 +1,7 @@
 (() => {
   const SHEETS_URL = window.SHEETS_URL || '';
   const SHEETS_KEY = window.SHEETS_KEY || '';
+  const GITHUB_IMG_API = "https://api.github.com/repos/rkworks2025-coder/work/contents/img";
 
   let isSingleMode = false;
   let currentFocusInput = null;
@@ -39,7 +40,7 @@
     osc.type = 'triangle'; 
     osc.frequency.setValueAtTime(4000, t); 
     osc.frequency.exponentialRampToValueAtTime(1000, t + 0.01); 
-    gain.gain.setValueAtTime(0.25, t); 
+    gain.gain.setValueAtTime(0.25, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
     osc.start(t);
     osc.stop(t + 0.01);
@@ -104,7 +105,7 @@
       applyPrev(data.prev || {});
     }catch(err){ 
       console.error('fetchSheetData failed', err);
-      throw err; 
+      throw err;
     }
   }
 
@@ -180,7 +181,6 @@
     tread_lr: {len:2, decimal:true}, pre_lr: {len:3}, dot_lr: {len:4},
     tread_rr: {len:2, decimal:true}, pre_rr: {len:3}, dot_rr: {len:4}
   };
-
   function formatTread(raw){
     const num = parseInt(raw, 10);
     return isNaN(num) ? '' : (num / 10).toFixed(1);
@@ -190,7 +190,6 @@
     const idx = AUTO_SEQUENCE.indexOf(currentId);
     const nextId = AUTO_SEQUENCE[idx + 1];
     if(!nextId) return;
-    
     if(nextId === 'submitBtn'){
       keypad.classList.remove('show');
       if (currentFocusInput) currentFocusInput.blur();
@@ -201,7 +200,7 @@
     
     const nextEl = document.getElementById(nextId) || document.querySelector(`[name="${nextId}"]`);
     if(nextEl) {
-      nextEl.focus({ preventScroll: true }); 
+      nextEl.focus({ preventScroll: true });
     }
   }
 
@@ -210,19 +209,16 @@
     
     const currentRow = target.closest('.tire-row, .std-row') || target.parentElement;
     if(!currentRow) return;
-
     const vv = window.visualViewport;
     const vh = vv ? vv.height : window.innerHeight;
     const kbRect = keypad.getBoundingClientRect();
-    const kbHeight = kbRect.height; // セーフエリアを含む実際の高さを取得
+    const kbHeight = kbRect.height;
 
     const rect = currentRow.getBoundingClientRect(); 
     const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
     const currentY = currentMatrix.m42;
-    
     const naturalBottom = rect.bottom - currentY;
     const threshold = vh - kbHeight;
-
     if(naturalBottom > threshold){
       const shift = naturalBottom - threshold + 20;
       mainWrap.style.transform = `translateY(-${shift}px)`;
@@ -276,7 +272,6 @@
       }
       currentFocusInput.dispatchEvent(new Event('input', { bubbles: true }));
     }, {passive: false});
-    
     document.getElementById('keyClose').addEventListener('click', hideKeypad);
     
     document.addEventListener('touchstart', e => {
@@ -286,8 +281,29 @@
     }, {passive:true});
   }
 
+  // ★作業管理アプリのスプラッシュ画像を事前に取得・プリロードする
+  async function preloadWorkSplash() {
+    try {
+      const res = await fetch(GITHUB_IMG_API);
+      if (!res.ok) throw new Error("Image API fetch failed");
+      const files = await res.json();
+      const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i)).map(f => f.download_url);
+      if (images.length > 0) {
+        const selectedUrl = images[Math.floor(Math.random() * images.length)];
+        // URLのみを一時保存（伝言メモ）
+        localStorage.setItem("junkai:preloaded_splash_url", selectedUrl);
+        // ブラウザに画像を読み込ませておく
+        const img = new Image();
+        img.src = selectedUrl;
+      }
+    } catch(e) {
+      console.warn("Splash preload failed", e);
+    }
+  }
+
   function init(){
     applyUrl(); showPrevPlaceholders(); fetchSheetData(); wire(); setupAutoAdvance(); setupCustomKeypad();
+    preloadWorkSplash(); 
     if(form){
       form.addEventListener('submit', async ev => {
         ev.preventDefault();

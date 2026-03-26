@@ -290,7 +290,7 @@
       const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i)).map(f => f.download_url);
       if (images.length > 0) {
         const selectedUrl = images[Math.floor(Math.random() * images.length)];
-        // URLのみを一時保存（伝言メモ）
+        // URLのみを一時保存
         localStorage.setItem("junkai:preloaded_splash_url", selectedUrl);
         // ブラウザに画像を読み込ませておく
         const img = new Image();

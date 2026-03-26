@@ -93,6 +93,7 @@
     if(md) u.searchParams.set('model', md);
     if(pf) u.searchParams.set('plate_full', pf);
     u.searchParams.set('ts', Date.now());
+    
     try{
       const res = await fetch(u.toString(), { cache:'no-store' });
       if(!res.ok) throw new Error('HTTP '+res.status);
@@ -101,11 +102,14 @@
       if(data.std_f && f && !f.value) f.value = data.std_f;
       if(data.std_r && r && !r.value) r.value = data.std_r;
       applyPrev(data.prev || {});
-    }catch(err){ console.warn('fetchSheetData failed', err); }
+    }catch(err){ 
+      console.error('fetchSheetData failed', err);
+      throw err; 
+    }
   }
 
   async function postToSheet(){
-    if(!SHEETS_URL){ showToast('送信先未設定'); return; }
+    if(!SHEETS_URL){ showToast('送信先未設定'); throw new Error('SHEETS_URL is not defined'); }
     const payload = collectPayload();
     try{
       const body = new URLSearchParams();
@@ -120,7 +124,11 @@
       showToast('送信完了');
       const pf = gv('[name="plate_full"]');
       if (pf) localStorage.setItem('junkai:tire_completed_plate', pf);
-    }catch(err){ console.error(err); showToast('送信失敗'); }
+    }catch(err){ 
+      console.error(err); 
+      showToast('送信失敗'); 
+      throw err;
+    }
   }
 
   function collectPayload(){
@@ -184,7 +192,6 @@
     if(!nextId) return;
     
     if(nextId === 'submitBtn'){
-      // キーボードを閉じ、フォーカスを外すが、画面位置（translateY）は一切動かさない
       keypad.classList.remove('show');
       if (currentFocusInput) currentFocusInput.blur();
       currentFocusInput = null;
@@ -202,16 +209,19 @@
     keypad.classList.add('show');
     
     const currentRow = target.closest('.tire-row, .std-row') || target.parentElement;
-    if(currentRow && currentRow === lastRowElement) return;
-    lastRowElement = currentRow;
+    if(!currentRow) return;
+
+    const vv = window.visualViewport;
+    const vh = vv ? vv.height : window.innerHeight;
+    const kbRect = keypad.getBoundingClientRect();
+    const kbHeight = kbRect.height; // セーフエリアを含む実際の高さを取得
 
     const rect = currentRow.getBoundingClientRect(); 
     const currentMatrix = new WebKitCSSMatrix(getComputedStyle(mainWrap).transform);
     const currentY = currentMatrix.m42;
     
     const naturalBottom = rect.bottom - currentY;
-    const kbHeight = 215;
-    const threshold = window.innerHeight - kbHeight;
+    const threshold = vh - kbHeight;
 
     if(naturalBottom > threshold){
       const shift = naturalBottom - threshold + 20;
@@ -219,10 +229,11 @@
     } else {
       mainWrap.style.transform = 'translateY(0)';
     }
+    
+    lastRowElement = currentRow;
   }
 
   function hideKeypad(){
-    // キーボードを閉じ、フォーカスを外すが、画面位置（translateY）は一切動かさない
     keypad.classList.remove('show');
     if (currentFocusInput) currentFocusInput.blur();
     currentFocusInput = null;
@@ -292,7 +303,6 @@
         ];
         if(resLines) resLines.textContent = lines.join('\n');
         
-        // 画面位置のリセットは、結果表示に切り替わるこのタイミングのみ
         mainWrap.style.transform = 'translateY(0)';
         form.style.display = 'none'; 
         resultCard.style.display = 'block'; 

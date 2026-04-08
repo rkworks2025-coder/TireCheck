@@ -229,6 +229,7 @@
       
       const splash = await getRandomAsset();
       if (splash) {
+        // ★TMA連携(Key A)はURLを、爆速表示(Key B)は実体データを別々に保存
         localStorage.setItem("junkai:preloaded_splash_url", splash.url);
         localStorage.setItem("junkai:preloaded_splash_data", splash.data);
       }

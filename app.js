@@ -38,7 +38,6 @@
     'tread_rr','pre_rr','dot_rr'
   ];
 
-  /* --- 音声・基本UI制御 --- */
   function playClickSound(){
     if(!audioCtx) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -87,7 +86,6 @@
     });
   }
 
-  /* --- 通信制御 --- */
   async function fetchSheetData(){
     const st = gv('[name="station"]');
     const md = gv('[name="model"]');
@@ -154,7 +152,6 @@
     return `${jst.getFullYear()}/${String(jst.getMonth() + 1).padStart(2,'0')}/${String(jst.getDate()).padStart(2,'0')} ${jst.getHours()}:${String(jst.getMinutes()).padStart(2,'0')}:${String(jst.getSeconds()).padStart(2,'0')}`;
   }
 
-  /* --- IndexedDB 制御 --- */
   function openDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, 1);
@@ -196,12 +193,11 @@
     const db = await openDB();
     return new Promise(r => {
       const req = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).get(key);
-      req.onsuccess = () => r(req.result);
+      req.onsuccess = () => r({ url: key, data: req.result });
       req.onerror = () => r(null);
     });
   }
 
-  /* --- 一括読み込みロジック --- */
   async function syncAssets() {
     if (isCheckingAssets) return;
     isCheckingAssets = true;
@@ -215,7 +211,6 @@
       const targets = remoteUrls.filter(url => !localKeys.includes(url));
 
       if (targets.length > 0) {
-        // ダウンロードが必要な場合のみプログレス表示
         loadingMsg.textContent = "データをダウンロードしています";
         progressWrap.hidden = false;
         let done = 0;
@@ -232,21 +227,22 @@
         }
       }
       
-      // 在庫から1枚選んでセット（次アプリ用）
       const splash = await getRandomAsset();
-      if (splash) localStorage.setItem("junkai:preloaded_splash_url", splash);
+      if (splash) {
+        // ★情報を二分化: URLはTMA用、Dataは表示用
+        localStorage.setItem("junkai:preloaded_splash_url", splash.url);
+        localStorage.setItem("junkai:preloaded_splash_data", splash.data);
+      }
 
     } catch (e) {
       if (e.name !== 'AbortError') console.warn("Asset sync failed", e);
     } finally {
-      // 完了したらフォームを表示
       loadingOverlay.style.display = 'none';
       mainWrap.style.visibility = 'visible';
       isCheckingAssets = false;
     }
   }
 
-  /* --- 初期化・イベント --- */
   const AUTO_SEQUENCE = ['std_f','std_r','tread_rf','pre_rf','dot_rf','tread_lf','pre_lf','dot_lf','tread_lr','pre_lr','dot_lr','tread_rr','pre_rr','dot_rr','submitBtn'];
   const FIELD_RULES = {
     std_f: {len:3}, std_r: {len:3},
@@ -336,16 +332,13 @@
   }
 
   function init(){
-    // 起動直後に在庫チェック
     syncAssets();
-    
     const p = new URLSearchParams(location.search);
     isSingleMode = (p.get('mode') === 'single');
     ['station','plate_full','model'].forEach(name => {
       const v = p.get(name);
       if(v) { const el = qs(`[name="${name}"]`); if(el) el.value = v; }
     });
-    
     showPrevPlaceholders(); fetchSheetData();
     ['station','plate_full','model'].forEach(name =>{
       document.querySelectorAll(`[name="${name}"]`).forEach(el=>{
@@ -354,15 +347,11 @@
         el.addEventListener('input',  h, {passive:true});
       });
     });
-    
     setupAutoAdvance(); setupCustomKeypad();
-    
     if(form){
       form.addEventListener('submit', async ev => {
         ev.preventDefault();
-        // 保存優先: 全ての画像通信を遮断
         abortController.abort();
-        
         const payload = collectPayload();
         if(resHeader) resHeader.textContent = (payload.station ? payload.station + '\n' : '') + payload.plate_full + '\n' + payload.model;
         const lines = [
@@ -374,12 +363,10 @@
           '', new Date().toLocaleString('ja-JP')
         ];
         if(resLines) resLines.textContent = lines.join('\n');
-        
         mainWrap.style.transform = 'translateY(0)';
         form.style.display = 'none'; 
         resultCard.style.display = 'block'; 
         window.scrollTo({top:0});
-        
         await postToSheet();
       });
     }

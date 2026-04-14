@@ -281,7 +281,6 @@
     }, {passive:true});
   }
 
-  // ★作業管理アプリのスプラッシュ画像を事前に取得・プリロードする
   async function preloadWorkSplash() {
     try {
       const res = await fetch(GITHUB_IMG_API);
@@ -290,9 +289,7 @@
       const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i)).map(f => f.download_url);
       if (images.length > 0) {
         const selectedUrl = images[Math.floor(Math.random() * images.length)];
-        // URLのみを一時保存
         localStorage.setItem("junkai:preloaded_splash_url", selectedUrl);
-        // ブラウザに画像を読み込ませておく
         const img = new Image();
         img.src = selectedUrl;
       }
@@ -301,12 +298,55 @@
     }
   }
 
+  // 簡易的な現在の週番号計算 (ISO準拠) - 以前のロジックを完全復元
+  const getWeek = (date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  };
+
   function init(){
     applyUrl(); showPrevPlaceholders(); fetchSheetData(); wire(); setupAutoAdvance(); setupCustomKeypad();
     preloadWorkSplash(); 
     if(form){
       form.addEventListener('submit', async ev => {
         ev.preventDefault();
+
+        // ===== WWYY (週週年年) バリデーション - 以前のロジックを完全復元 =====
+        const now = new Date();
+        const currentYear2Digit = Number(String(now.getFullYear()).slice(-2));
+        const currentWeek = getWeek(now);
+        const tires = ['rf', 'lf', 'lr', 'rr'];
+        
+        for (const pos of tires) {
+          const dotVal = gv(`#dot_${pos}`);
+          if (!dotVal) continue;
+
+          if (dotVal.length !== 4) {
+            showToast(`${pos.toUpperCase()}の製造年週は4桁で入力してください`);
+            return; // 送信中止
+          }
+
+          const ww = parseInt(dotVal.substring(0, 2), 10);
+          const yy = parseInt(dotVal.substring(2, 4), 10);
+
+          if (ww < 1 || ww > 53) {
+            showToast(`${pos.toUpperCase()}の製造週が不正です(${ww})`);
+            return;
+          }
+          if (yy > currentYear2Digit) {
+            showToast(`${pos.toUpperCase()}の製造年が未来になっています(${yy})`);
+            return;
+          }
+          if (yy === currentYear2Digit && ww > currentWeek) {
+            showToast(`${pos.toUpperCase()}の製造週が未来になっています(${ww})`);
+            return;
+          }
+        }
+        // ===========================================
+
         const p = collectPayload();
         if(resHeader) resHeader.textContent = (p.station ? p.station + '\n' : '') + p.plate_full + '\n' + p.model;
         const lines = [

@@ -125,11 +125,6 @@
       showToast('送信完了');
       const pf = gv('[name="plate_full"]');
       if (pf) localStorage.setItem('junkai:tire_completed_plate', pf);
-      // return_toパラメータがあればそのURLへリダイレクト
-      const returnTo = new URLSearchParams(location.search).get('return_to');
-      if (returnTo) {
-        setTimeout(() => { location.href = returnTo; }, 800);
-      }
     }catch(err){ 
       console.error(err); 
       showToast('送信失敗'); 

@@ -1,22 +1,9 @@
 (() => {
-  // TireCheckは別ドメイン(ポータルとは別オリジン)のため、
-  // ポータルのlocalStorage(担当者情報)を直接読めない。
-  // 巡回アプリの「点検」リンクからURLパラメータ operator=katayama/tojima
-  // として渡してもらい、それに応じてGAS URL・画像振り分け先を切り替える。
-  const TIRE_GAS_URLS = {
-    katayama: "https://script.google.com/macros/s/AKfycbyo2U1_TBxvzhJL50GHY8S0NeT1k0kueWb4tI1q2Oaw87NuGXqwjO7PWyCDdqFNZTdz/exec",
-    tojima:   "https://script.google.com/macros/s/AKfycbyvF9xUna4h9-4dhvGeQsxbvbb-BOLRddpxwGozjCd8B8sICUZRaj2a3ujijYFPMImi/exec"
-  };
-  const urlOperatorParam = new URLSearchParams(location.search).get('operator');
-  const tireOperator = (urlOperatorParam === 'tojima') ? 'tojima' : 'katayama';
-
-  const SHEETS_URL = TIRE_GAS_URLS[tireOperator];
-  const SHEETS_KEY = window.SHEETS_KEY || 'tl1';
-  const GITHUB_IMG_API = `https://api.github.com/repos/rkworks2025-coder/RK_portal/contents/work/img/${tireOperator}`;
+  const SHEETS_URL = window.SHEETS_URL || '';
+  const SHEETS_KEY = window.SHEETS_KEY || '';
+  const GITHUB_IMG_API = "https://api.github.com/repos/rkworks2025-coder/work/contents/img";
 
   let isSingleMode = false;
-  let lastCompletedPlate = null;
-  let lastSplashUrl = null;
   let currentFocusInput = null;
   let lastRowElement = null; 
   let audioCtx = null; 
@@ -28,7 +15,6 @@
   const resHeader  = document.getElementById('res_header');
   const resLines   = document.getElementById('res_lines');
   const backBtn    = document.getElementById('backBtn');
-  const closeTabBtn = document.getElementById('closeTabBtn');
   const keypad = document.getElementById('customKeypad');
   const mainWrap = document.getElementById('mainWrap');
 
@@ -137,7 +123,8 @@
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
       showToast('送信完了');
-      lastCompletedPlate = gv('[name="plate_full"]');
+      const pf = gv('[name="plate_full"]');
+      if (pf) localStorage.setItem('junkai:tire_completed_plate', pf);
     }catch(err){ 
       console.error(err); 
       showToast('送信失敗'); 
@@ -179,16 +166,9 @@
     return `${p.year}/${p.month}/${p.day} ${p.hour}:${p.minute}:${p.second}`;
   }
 
-  let openedFromJunkai = false;
-  let junkaiReturnUrl = null;
-
   function applyUrl(){
     const p = new URLSearchParams(location.search);
     isSingleMode = (p.get('mode') === 'single');
-    // station/plate_full/modelのいずれかが付いていれば、
-    // 巡回アプリの「点検」リンク経由で開かれたとみなす
-    openedFromJunkai = !!(p.get('station') || p.get('plate_full') || p.get('model'));
-    junkaiReturnUrl = p.get('return_url') || null;
     ['station','plate_full','model'].forEach(name => {
       const v = p.get(name);
       if(v) { const el = qs(`[name="${name}"]`); if(el) el.value = v; }
@@ -321,7 +301,7 @@
       const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i)).map(f => f.download_url);
       if (images.length > 0) {
         const selectedUrl = images[Math.floor(Math.random() * images.length)];
-        lastSplashUrl = selectedUrl;
+        localStorage.setItem("junkai:preloaded_splash_url", selectedUrl);
         const img = new Image();
         img.src = selectedUrl;
       }
@@ -394,23 +374,12 @@
         mainWrap.style.transform = 'translateY(0)';
         form.style.display = 'none'; 
         resultCard.style.display = 'block'; 
-        if(closeTabBtn) closeTabBtn.style.display = openedFromJunkai ? 'block' : 'none';
         window.scrollTo({top:0});
         
         await postToSheet();
       });
     }
     if(backBtn) backBtn.addEventListener('click', () => { resultCard.style.display = 'none'; form.style.display = 'block'; window.scrollTo({top:0}); });
-    if(closeTabBtn) closeTabBtn.addEventListener('click', () => {
-      // window.openerはiOS Safariで無効化されており使えないため、
-      // 完了した車両番号・スプラッシュ画像URLをパラメータで巡回アプリへ渡して遷移する。
-      // return_url(city等の元のパラメータを含む)を基準にする。
-      const baseUrl = junkaiReturnUrl || 'https://rkworks2025-coder.github.io/RK_portal/junkai/';
-      const url = new URL(baseUrl);
-      if (lastCompletedPlate) url.searchParams.set('tire_completed_plate', lastCompletedPlate);
-      if (lastSplashUrl) url.searchParams.set('splash_img', lastSplashUrl);
-      location.href = url.toString();
-    });
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init, {once:true});

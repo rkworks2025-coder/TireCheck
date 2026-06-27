@@ -15,6 +15,8 @@
   const GITHUB_IMG_API = `https://api.github.com/repos/rkworks2025-coder/RK_portal/contents/work/img/${tireOperator}`;
 
   let isSingleMode = false;
+  let lastCompletedPlate = null;
+  let lastSplashUrl = null;
   let currentFocusInput = null;
   let lastRowElement = null; 
   let audioCtx = null; 
@@ -135,12 +137,7 @@
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
       showToast('送信完了');
-      const pf = gv('[name="plate_full"]');
-      // 別オリジンのためlocalStorageは共有できない。
-      // window.opener(巡回アプリのタブ)へpostMessageで直接通知する。
-      if (pf && window.opener) {
-        window.opener.postMessage({ type: 'tire_completed', plate: pf }, 'https://rkworks2025-coder.github.io');
-      }
+      lastCompletedPlate = gv('[name="plate_full"]');
     }catch(err){ 
       console.error(err); 
       showToast('送信失敗'); 
@@ -183,6 +180,7 @@
   }
 
   let openedFromJunkai = false;
+  let junkaiReturnUrl = null;
 
   function applyUrl(){
     const p = new URLSearchParams(location.search);
@@ -190,6 +188,7 @@
     // station/plate_full/modelのいずれかが付いていれば、
     // 巡回アプリの「点検」リンク経由で開かれたとみなす
     openedFromJunkai = !!(p.get('station') || p.get('plate_full') || p.get('model'));
+    junkaiReturnUrl = p.get('return_url') || null;
     ['station','plate_full','model'].forEach(name => {
       const v = p.get(name);
       if(v) { const el = qs(`[name="${name}"]`); if(el) el.value = v; }
@@ -322,11 +321,7 @@
       const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i)).map(f => f.download_url);
       if (images.length > 0) {
         const selectedUrl = images[Math.floor(Math.random() * images.length)];
-        // 別オリジンのためlocalStorageは共有できない。
-        // window.opener(巡回アプリのタブ)へpostMessageで直接通知する。
-        if (window.opener) {
-          window.opener.postMessage({ type: 'splash_preloaded', url: selectedUrl }, 'https://rkworks2025-coder.github.io');
-        }
+        lastSplashUrl = selectedUrl;
         const img = new Image();
         img.src = selectedUrl;
       }
@@ -407,9 +402,14 @@
     }
     if(backBtn) backBtn.addEventListener('click', () => { resultCard.style.display = 'none'; form.style.display = 'block'; window.scrollTo({top:0}); });
     if(closeTabBtn) closeTabBtn.addEventListener('click', () => {
-      // 巡回アプリの「点検」リンク(target="_blank")から開かれたタブなので、
-      // ここを閉じれば自動的にホーム画面の巡回アプリ(standalone)に戻る。
-      window.close();
+      // window.openerはiOS Safariで無効化されており使えないため、
+      // 完了した車両番号・スプラッシュ画像URLをパラメータで巡回アプリへ渡して遷移する。
+      // return_url(city等の元のパラメータを含む)を基準にする。
+      const baseUrl = junkaiReturnUrl || 'https://rkworks2025-coder.github.io/RK_portal/junkai/';
+      const url = new URL(baseUrl);
+      if (lastCompletedPlate) url.searchParams.set('tire_completed_plate', lastCompletedPlate);
+      if (lastSplashUrl) url.searchParams.set('splash_img', lastSplashUrl);
+      location.href = url.toString();
     });
   }
 

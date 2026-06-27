@@ -1,7 +1,7 @@
 :root{ --bg:#111; --fg:#eee; --muted:#9aa; --card:#1a1a1a; --brand:#ff8c00; --kb-bg:#252525; }
 *{ box-sizing:border-box; }
 body{ margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; overflow-x: hidden; }
-.wrap{ padding:8px; max-width:740px; margin:0 auto; transition: transform 0.3s ease-out; }
+.wrap{ padding:calc(8px + env(safe-area-inset-top)) 8px 8px; max-width:740px; margin:0 auto; transition: transform 0.3s ease-out; }
 
 .card{ background:var(--card); border-radius:12px; padding:12px; }
 
